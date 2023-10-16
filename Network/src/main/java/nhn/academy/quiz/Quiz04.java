@@ -21,13 +21,13 @@ public class Quiz04 {
                 port = Integer.parseInt(args[1]);
             }
         } catch (NumberFormatException ignore) {
-            System.err.println("not same");
+            System.err.println("Port가 올바르지 않습니다.");
             System.exit(1);
         }
 
         try{
             Socket socket = new Socket(host,port);
-            System.out.println("connected");
+            System.out.println("서버에 연결 있습니다.");
 
             OutputStream output = socket.getOutputStream();
 
@@ -40,15 +40,15 @@ public class Quiz04 {
                     break;
                 }
 
-                output.write(line.getBytes());
-                output.write("\n".getBytes());
-                output.flush();
+                output.write(line.getBytes()); // 문자열 전송
+                output.write("\n".getBytes()); // 문자열 끝을 위한 줄바꿈
+                output.flush(); // 남아있는 데이터 완전히 전송
 
             }
 
             socket.close();
         } catch(ConnectException  e){
-            System.out.println(host + " : ");
+            System.out.println(host + " : " + port + "에 연결할 수 없습니다.");
         } catch(IOException e){
 
         }
