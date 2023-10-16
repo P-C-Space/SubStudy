@@ -86,3 +86,8 @@ Thread class를 이용하는 것과 Runnable 인터페이스를 이용하는 것
 |간단한 class라도 별도의 class 정의가 필요하다.
 |Runnable interface는 functional interface로 Lambda로 구현 가능하다.
 |===
+
+== Semaphore
+* 깃발이라는 의미 -> critical section 공유하는 데이터 부분에서 상태를 알려준다는 의미에서 유래
+* 0~n 공유하는 데이터의 개수
+* 5개가 있다면 사용가능한 개수 -> 5 | 3개가 사용중이면 -> 2 | 3개 사용중이다가 한개 반납 -> 3
