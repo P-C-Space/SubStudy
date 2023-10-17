@@ -226,7 +226,7 @@ public class TicTacTocServer {
                     }
                     output.write("\n".getBytes());
                     if (i < 2) {
-                        output.write("----\n".getBytes());
+                        output.write("------\n".getBytes());
                     }
                 }
                 output.flush();
