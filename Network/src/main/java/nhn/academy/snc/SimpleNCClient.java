@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-public class SimpleNC {
+public class SimpleNCClient {
     public static void main(String[] args) {
 
 
@@ -47,7 +47,10 @@ public class SimpleNC {
 //                while (iter.hasNext()) {
 //                    System.out.println(iter.next());
 //                }
-                clientMode(iter.next(), iter.next());
+//                iter.next();
+//                clientMode(iter.next(), iter.next());
+                iter.next();
+                clientMode(iter.next(),iter.next());
             }
         } catch (ParseException ignore) {
             System.out.println("인수가 잘못되었습니다");
@@ -130,10 +133,9 @@ public class SimpleNC {
             BufferedReader terminalIn = new BufferedReader(new InputStreamReader(System.in));
 
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            ClientThread thread = new ClientThread(socket);
-            thread.start();
-
             String message;
+            ClientThread clientThread = new ClientThread(socket);
+            clientThread.start();
             while (((message = terminalIn.readLine()) != null)) {
                 writer.write(message);
                 writer.flush();

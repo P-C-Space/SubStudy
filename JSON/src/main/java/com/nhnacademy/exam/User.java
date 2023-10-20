@@ -22,7 +22,7 @@ public class User {
     }
 
     public User(String id, String nickname, LogData logData, MatchHistory matchHistory,8 ) {
-        this.equipmentList = eq
+        this.equipmentList;
         this.id = id;
         this.nickname = nickname;
         this.matchHistory = matchHistory;

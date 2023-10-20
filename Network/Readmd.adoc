@@ -353,3 +353,66 @@ Format
 * 프로토콜 상에 드러나지 않는 값.
 * 송신측에서 제어
 
+
+==== SSL/TLS
+* 원래 웹에서는 데이터는 누구나 읽을 수 있는 일반 텍스트 형태로 전송 되었다. 때문에 가로채더라도 문제없이 읽을 수 있다.
+* 이는 개인정보보호, 인증, 데이터 무결성에 문제가 된다. 해결하기 위해 나온 것이 SSL(Secure Socket Layer)이다.
+* 모든 데이터를 암호화하고 특정한 유형의 사이버 공격도 차단한다.
+* SSL/TLS를 사용하는 HTTP를 HTTPS라고 한다.
+* 1996년 SSL은 3.0이후 업데이트 되지 않았으며, 여러가지 취약성으로 인해 중단될 전망이며, SSL을 개발한 Netscape가 업데이트에 참여하지 않게 되면서 소유권이 바뀌어 TLS 명칭만 바뀐것으로 볼 수 있다.
+* SSL 3.0 이후 버전이 TLS라는 의미이다.
+* SSL/TLS는 웹에서 전송되는 모든 데이터를 암호화 한다. 클라이언트와 서버간 핸드셰이크를 통한 인증이 이루어지며 무결성을 위해 도착하기 전에 조작된 여부를 확인한다.
+
+.SSL/TLS HandShake
+* 1. 클라이언트 -> 서버 메세지 전송 - HandShake지점 TLS버전, 암호화 알고리즘, 무작위 바이트 문자열
+* 2. 서버 -> 클라이언트 메세지 전송 - 클라이언트의 메세지에 응답으로 서버의 SSL인증서, 선택한 암호화 알고리즘, 서버에서 생성한 무작위 바이트 문자열을 포함한 메세지를 전송한다.
+* 3. 인증 - 클라이언트가 서버의 SSL 인증서를 인증 발행 기관에 검증한다.
+* 4. 예비 마스터 암호 - 클라이언트는 무작위 바이트 문자열을 공개 키로 암호화된 paremater secret key를 서버로 전송한다
+* 5. 개인 키 사용 - 서버가 premaster secret 키를 개인 키를 통해 복호화한다.
+* 6. 세션 키 생성 - 클라이언트와 서버는 클라이언트가 생성한 무작위 키, 서버가 생성한 무작위 키, premaster secret키를 통해 세션 키를 생성한다. - 양쪽은 같은 키가 생성되어야 한다.
+* 7. 클라이언트 완료 전송 - 클라이언트는 세션 키로 암호환된 완료 메세지를 전송 한다.
+* 8. 서버 완료 전송 - 서버도 세션 키로 암호화된 완료 메세지를 전송한다.
+* 9. 핸드셰이크 완료 - 완료되고, 세션 키를 이용해 통신을 진행
+
+==== SSL/TLS인증서
+* SSL/TLS는 인증서가 있는 웹사이트만 실행할 수 있으며 이는 CA(Certificate Authority)에서 발급한다.
+
+
+==== GET vs POST
+
+* GET
+[source. html]
+----
+GET /welcome.html?name=TEST-NAME&content=TEST-CONTENT&send=send HTTP/1.1
+Host: test-vm.com:3000
+Connection: keep-alive
+Cache-Control: max-age=0
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+DNT: 1
+Referer: http://test-vm.com:3000/form-get1.html
+Accept-Encoding: gzip, deflate, sdch, br
+Accept-Language: ko
+If-Modified-Since: Sat, 15 Jan 2022 23:30:56 GMT
+----
+* POST
+[source, html]
+----
+POST /welcome.html HTTP/1.1
+Host: test-vm.com:3000
+Connection: keep-alive
+Content-Length: 45
+Cache-Control: max-age=0
+Origin: http://test-vm.com
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36
+Content-Type: application/x-www-form-urlencoded
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+DNT: 1
+Referer: http://test-vm.com:3000/form-post1.html
+Accept-Encoding: gzip, deflate, br
+Accept-Language: ko
+
+name=TEST-NAME&content=TEST-CONTENT&send=send
+----
