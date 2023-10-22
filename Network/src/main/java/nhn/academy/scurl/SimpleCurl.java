@@ -3,16 +3,19 @@ package nhn.academy.scurl;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.json.JSONObject;
 
 public class SimpleCurl {
     public static void main(String[] args) {
@@ -26,15 +29,36 @@ public class SimpleCurl {
         try {
             CommandLine cmd = parser.parse(options, args);
 
+            if (cmd.hasOption("X")) {
+                method = cmd.getOptionValue("X");
+            }
+
+            List<String> arg = List.of(cmd.getArgs());
+            url = new URL(arg.get(0));
+            http = (HttpURLConnection) url.openConnection();
+            http.setRequestMethod(method);
+
+            if (cmd.hasOption("H")) {
+                String requestHeader = cmd.getOptionValue("H");
+                requestHeader.replaceAll("\"", "");
+                String[] requestHeaderList = requestHeader.split(" ");
+                int length = requestHeaderList[0].length();
+                requestHeaderList[0] = requestHeaderList[0].substring(0, length - 1);
+                http.addRequestProperty(requestHeaderList[0], requestHeaderList[1]);
+            }
+
+            if (cmd.hasOption("d")) {
+                http.setDoOutput(true); // 출력을 가능하게 하는 메서드
+                OutputStream writer = http.getOutputStream();
+                writer.write(new JSONObject(cmd.getOptionValue("d")).toString().getBytes());
+            }
+
+            if(cmd.hasOption("L")){
+
+            }
+
 
             if (cmd.hasOption("v")) {
-                List<String> arg = List.of(cmd.getArgs());
-                url = new URL(arg.get(0));
-
-                http = (HttpURLConnection) url.openConnection();
-                http.setRequestMethod(method);
-
-
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(http.getInputStream()));
                 String userAgent = "";
                 String accept = "";
@@ -49,7 +73,6 @@ public class SimpleCurl {
                     messageList.add(message);
                 }
 
-                System.out.println(http.getHeaderFields());
                 stringBuilder.append("* Connected to " + http.getURL().getHost() + " port " + http.getURL().getPort())
                         .append("\n> " + http.getRequestMethod() + " " + http.getURL().getPath() + " " +
                                 http.getHeaderField(0).split(" ")[0])
@@ -71,41 +94,16 @@ public class SimpleCurl {
 
                 System.out.println(stringBuilder);
 
-            }
-            if (cmd.hasOption("X")) {
-                System.out.println("옵션 -X 실행");
-                List<String> arg = List.of(cmd.getArgs());
-                method = cmd.getOptionValue("X");
-                url = new URL(arg.get(0));
-
-                if (!method.equals("GET")) {
-                    http = (HttpURLConnection) url.openConnection();
-                    http.setRequestMethod(method);
+                for (String mes : messageList) {
+                    System.out.println(mes);
                 }
-            }
-            
-            if (cmd.hasOption("H")) {
-                String requestHeader = cmd.getOptionValue("H");
-                requestHeader.replaceAll("\"", "");
 
-                String[] requestHeaderList = requestHeader.split(" ");
-
-                int length = requestHeaderList[0].length();
-                requestHeaderList[0] = requestHeaderList[0].substring(0, length - 1);
-
-                List<String> arg = List.of(cmd.getArgs());
-                url = new URL(arg.get(0));
-
-                http = (HttpURLConnection) url.openConnection();
-                http.addRequestProperty(requestHeaderList[0], requestHeaderList[1]);
-            }
-            if (url == null) {
-                url = new URL(args[0]);
-            }
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(http.getInputStream()));
-            String message;
-            while ((message = bufferedReader.readLine()) != null) {
-                System.out.println(message);
+            } else {
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(http.getInputStream()));
+                String message;
+                while ((message = bufferedReader.readLine()) != null) {
+                    System.out.println(message);
+                }
             }
 
 
