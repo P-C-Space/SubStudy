@@ -35,8 +35,32 @@ public class SimpleCurl {
 
             List<String> arg = List.of(cmd.getArgs());
             url = new URL(arg.get(0));
-            http = (HttpURLConnection) url.openConnection();
-            http.setRequestMethod(method);
+
+            if(cmd.hasOption("L")){
+
+                int maxCount = 5;
+
+                for(int i = 0;i<maxCount;i++){
+                    http = (HttpURLConnection) url.openConnection();
+                    http.setRequestMethod(method);
+
+                    http.setInstanceFollowRedirects(false); // Disable automatic redirection
+                    int responseCode = http.getResponseCode();
+
+                    if(responseCode == HttpURLConnection.HTTP_MOVED_TEMP){
+                        System.out.println("Connected to " + http.getURL().getHost() + " port " + http.getURL().getPort());
+
+                    }
+                    http.disconnect();
+                }
+
+
+
+            }
+            else{
+                http = (HttpURLConnection) url.openConnection();
+                http.setRequestMethod(method);
+            }
 
             if (cmd.hasOption("H")) {
                 String requestHeader = cmd.getOptionValue("H");
@@ -51,10 +75,6 @@ public class SimpleCurl {
                 http.setDoOutput(true); // 출력을 가능하게 하는 메서드
                 OutputStream writer = http.getOutputStream();
                 writer.write(new JSONObject(cmd.getOptionValue("d")).toString().getBytes());
-            }
-
-            if(cmd.hasOption("L")){
-
             }
 
 
