@@ -83,7 +83,7 @@ public class SimpleCurl {
                     http.setRequestMethod(method);
                 }
             }
-            
+
             if (cmd.hasOption("H")) {
                 String requestHeader = cmd.getOptionValue("H");
                 requestHeader.replaceAll("\"", "");
