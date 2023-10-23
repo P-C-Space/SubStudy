@@ -1,14 +1,17 @@
 package nhn.academy.scurl;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.URL;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -18,49 +21,45 @@ import org.apache.commons.cli.ParseException;
 import org.json.JSONObject;
 
 public class SimpleCurl {
-    public static void main(String[] args) {
-        StringBuilder stringBuilder = new StringBuilder();
-        URL url = null;
-        HttpURLConnection http = null;
-        String method = "GET";
-        Options options = addoption();
-        CommandLineParser parser = new DefaultParser();
 
+    static StringBuilder stringBuilder = new StringBuilder();
+    static URL url = null;
+    static HttpURLConnection http = null;
+    static String method = "GET";
+    static String userAgent = "curl/8.1.2";
+    static String accept = "*/*";
+    static Options options = addoption();
+    static CommandLineParser parser = new DefaultParser();
+    static CommandLine cmd;
+    static int requestCount = 0;
+
+
+    public static void main(String[] args) {
         try {
-            CommandLine cmd = parser.parse(options, args);
+            cmd = parser.parse(options, args);
 
             if (cmd.hasOption("X")) {
                 method = cmd.getOptionValue("X");
             }
 
-            List<String> arg = List.of(cmd.getArgs());
-            url = new URL(arg.get(0));
+            String urlString = cmd.getArgs()[0];
 
-            if(cmd.hasOption("L")){
+            /*
+            URL 생성자
+            URL(String protocol, String host, int port, String file)
+            URL(String protocol, String host, String file)
+            URL(String urlString)
+             */
+            url = new URL(urlString);
 
-                int maxCount = 5;
+            setHttp();
+            InetAddress inetAddress = InetAddress.getByName(url.getHost());
 
-                for(int i = 0;i<maxCount;i++){
-                    http = (HttpURLConnection) url.openConnection();
-                    http.setRequestMethod(method);
-
-                    http.setInstanceFollowRedirects(false); // Disable automatic redirection
-                    int responseCode = http.getResponseCode();
-
-                    if(responseCode == HttpURLConnection.HTTP_MOVED_TEMP){
-                        System.out.println("Connected to " + http.getURL().getHost() + " port " + http.getURL().getPort());
-
-                    }
-                    http.disconnect();
-                }
-
-
-
-            }
-            else{
-                http = (HttpURLConnection) url.openConnection();
-                http.setRequestMethod(method);
-            }
+            stringBuilder.append(
+                    "*\tTrying " + inetAddress.getHostAddress() + ":" + url.getDefaultPort() + "...\n");
+            stringBuilder.append(
+                    "* Connected to " + url.getHost() + " port " + url.getDefaultPort() + " (#" + (requestCount) +
+                            ")");
 
             if (cmd.hasOption("H")) {
                 String requestHeader = cmd.getOptionValue("H");
@@ -77,61 +76,134 @@ public class SimpleCurl {
                 writer.write(new JSONObject(cmd.getOptionValue("d")).toString().getBytes());
             }
 
+            //~$ scurl -F "upload=@file_path" http://httpbin.org/post
+            if (cmd.hasOption("F")) {
+                String boundary = "------------------------8f848e9206984df0";
+                http.setRequestMethod("POST");
+                http.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+                http.setDoOutput(true);
+                http.setDoInput(true);
+                http.setUseCaches(false);
 
-            if (cmd.hasOption("v")) {
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(http.getInputStream()));
-                String userAgent = "";
-                String accept = "";
-                String message;
-                List<String> messageList = new LinkedList<>();
-                while ((message = bufferedReader.readLine()) != null) {
-                    if (message.contains("User-Agent")) {
-                        userAgent = message.replaceAll("\"", "").trim();
-                    } else if (message.contains("Accept")) {
-                        accept = message.replaceAll("\"", "").trim();
-                    }
-                    messageList.add(message);
+                String filePath = cmd.getOptionValue("F");
+                filePath = filePath.split("=")[1];
+                String fileName = filePath.substring(2,filePath.length());
+
+                System.out.println(filePath);
+                System.out.println(fileName);
+
+                DataOutputStream outputStream = new DataOutputStream(http.getOutputStream());
+                outputStream.writeBytes("--" + boundary + "\r\n");
+                outputStream.writeBytes("Content-Disposition: form-data; name=\"upload\"; filename=\"" + fileName + "\"\r\n");
+                outputStream.writeBytes("Content-Type: application/octet-stream\r\n\r\n");
+
+                // 파일 내용을 전송
+                FileInputStream fileInputStream = new FileInputStream(new File(filePath));
+                int bytesRead;
+                byte[] buffer = new byte[1024];
+                while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
                 }
-
-                stringBuilder.append("* Connected to " + http.getURL().getHost() + " port " + http.getURL().getPort())
-                        .append("\n> " + http.getRequestMethod() + " " + http.getURL().getPath() + " " +
-                                http.getHeaderField(0).split(" ")[0])
-                        .append("\n> Host: " + http.getURL().getHost())
-                        .append("\n> " + userAgent)
-                        .append("\n> " + accept)
-                        .append("\n>")
-                        .append("\n< " + http.getHeaderField(0))
-                        .append("\n< Date: " + http.getHeaderField("Date"))
-                        .append("\n< Content-Type: " + http.getHeaderField("Content-Type"))
-                        .append("\n< Content-Length: " + http.getHeaderField("Content-Length"))
-                        .append("\n< Connection: " + http.getHeaderField("Connection"))
-                        .append("\n< Server: " + http.getHeaderField("Server"))
-                        .append("\n< Access-Control-Allow-Origin: " +
-                                http.getHeaderField("Access-Control-Allow-Origin"))
-                        .append("\n< Access-Control-Allow-Credentials: " +
-                                http.getHeaderField("Access-Control-Allow-Credentials"))
-                        .append("\n< \n");
-
-                System.out.println(stringBuilder);
-
-                for (String mes : messageList) {
-                    System.out.println(mes);
-                }
-
-            } else {
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(http.getInputStream()));
-                String message;
-                while ((message = bufferedReader.readLine()) != null) {
-                    System.out.println(message);
-                }
+                fileInputStream.close();
+                outputStream.writeBytes("\r\n");
+                outputStream.writeBytes("--" + boundary + "--\r\n");
+                outputStream.flush();
+                outputStream.close();
             }
 
+            if (cmd.hasOption("L")) {
+
+                int maxCount = 5;
+                int redirectCount = 0;
+                while (redirectCount < maxCount) {
+                    setHttp();
+                    http.setInstanceFollowRedirects(false); // Disable automatic redirection
+                    http.connect();
+                    int responseCode = http.getResponseCode();
+                    // System.out.println(responseCode);
+                    storeRequestResponse();
+
+                    if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
+                            responseCode == HttpURLConnection.HTTP_MOVED_PERM ||
+                            responseCode == 307 || responseCode == 308) {
+
+                        String location = http.getHeaderField("Location");
+                        urlString = url.getProtocol() + "://" + url.getHost() + location;
+                        // System.out.println(urlString);
+                        url = new URL(urlString);
+
+                        if (redirectCount > 0) {
+                            stringBuilder.append("\n* Ignoring the response-body");
+                        }
+                        stringBuilder.append(
+                                        "\n* Connection #" + requestCount + " to host " + url.getHost() + "left intact")
+                                .append("\n* Issue another request to this URL: \'" + urlString + "\'")
+                                .append("\n* Found bundle for host: " + InetAddress.getByName(url.getHost()) +
+                                        " [serially]")
+                                .append("\n* Can not multiplex, even if we wanted to")
+                                .append("\n* Re-using exisiting connection #" + requestCount + " with host " +
+                                        url.getHost());
+                    }
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        break;
+                    }
+                    http.disconnect();
+                    redirectCount++;
+                }
+
+                if (redirectCount == 5) {
+                    throw new IOException("ERROR : MAX redirect값을 초과");
+                }
+            } else {
+                storeRequestResponse();
+            }
+
+
+            if (cmd.hasOption("v")) {
+                System.out.println(stringBuilder);
+
+            }
+
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(http.getInputStream()));
+            String message;
+            while ((message = bufferedReader.readLine()) != null) {
+                System.out.println(message);
+            }
 
         } catch (ParseException e) {
             System.out.println("잘못된 인수");
         } catch (IOException e) {
-            System.out.println("잘못된 URL");
+            e.printStackTrace();
         }
+    }
+
+    static void setHttp() throws IOException {
+        http = (HttpURLConnection) url.openConnection();
+
+        http.setRequestProperty("User-Agent", userAgent);
+        http.setRequestProperty("accept", accept);
+        http.setRequestMethod(method);
+    }
+
+    static void storeRequestResponse() throws IOException {
+
+        stringBuilder.append("\n> " + http.getRequestMethod() + " " + http.getURL().getPath() + " " +
+                        http.getHeaderField(0).split(" ")[0])
+                .append("\n> Host: " + url.getHost())
+                .append("\n> User-Agent: " + http.getRequestProperty("User-Agent"))
+                .append("\n> Accept: " + http.getRequestProperty("Accept"))
+                .append("\n>");
+
+        stringBuilder.append("\n< " + http.getHeaderField(0));
+
+        for (int i = 1; i < http.getHeaderFields().size(); i++) {
+            String key = http.getHeaderFieldKey(i);
+            String value = http.getHeaderField(i);
+            stringBuilder.append("\n< " + key + ": " + value);
+        }
+
+        stringBuilder.append("\n<");
+
     }
 
 
