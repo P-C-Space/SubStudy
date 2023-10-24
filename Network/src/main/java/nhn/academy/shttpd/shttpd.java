@@ -6,10 +6,8 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
 public class shttpd {
-
-
     public static void main(String[] args) {
-        int port = 8000;
+        int port = 8080;
         HttpServer httpServer = null;
 
         try {
@@ -23,6 +21,7 @@ public class shttpd {
         try {
             httpServer = HttpServer.create(new InetSocketAddress(port),0);
             httpServer.createContext("/", new Handler());
+
             httpServer.setExecutor(Executors.newCachedThreadPool());
             httpServer.start();
         } catch (IOException e) {
@@ -30,3 +29,5 @@ public class shttpd {
         }
     }
 }
+
+

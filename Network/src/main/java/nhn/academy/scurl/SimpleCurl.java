@@ -87,14 +87,12 @@ public class SimpleCurl {
 
                 String filePath = cmd.getOptionValue("F");
                 filePath = filePath.split("=")[1];
-                String fileName = filePath.substring(2,filePath.length());
 
                 System.out.println(filePath);
-                System.out.println(fileName);
 
                 DataOutputStream outputStream = new DataOutputStream(http.getOutputStream());
                 outputStream.writeBytes("--" + boundary + "\r\n");
-                outputStream.writeBytes("Content-Disposition: form-data; name=\"upload\"; filename=\"" + fileName + "\"\r\n");
+                outputStream.writeBytes("Content-Disposition: form-data; name=\"upload\"; filename=\"" + filePath + "\"\r\n");
                 outputStream.writeBytes("Content-Type: application/octet-stream\r\n\r\n");
 
                 // 파일 내용을 전송
