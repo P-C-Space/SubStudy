@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URI;
+
 
 public class Handler implements HttpHandler {
     private String root = "./";
