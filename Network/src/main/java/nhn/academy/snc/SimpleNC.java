@@ -1,19 +1,27 @@
 package nhn.academy.snc;
 
-import org.apache.commons.cli.*;
-
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 public class SimpleNC {
     public static void main(String[] args) {
 
 
+        int port = 1234;
         Options options = new Options();
         Option listen = Option.builder("l")
                 .argName("hostname").argName("port")
@@ -27,43 +35,33 @@ public class SimpleNC {
             CommandLine cmd = parser.parse(options, args);
             if (cmd.hasOption('l')) {
                 System.out.println("서버로 접속");
-//                for(String s : cmd.getArgs()){
-//                    System.out.println(s);
-//                }
-//
-//                for(String s : cmd.getOptionValues("l")){
-//                    System.out.println(s);
-//                }
-//
-                Iterator<String> iter = Arrays.stream(cmd.getOptionValues("l")).iterator();
-//                while (iter.hasNext()) {
-//                    System.out.println(iter.next());
-//                }
-                String port = iter.next();
+
+                if (cmd.getArgs().length < 1) {
+                    throw new NullPointerException("없는 인자");
+                }
+
+
+                port = Integer.parseInt(cmd.getArgs()[0]);
+
                 serverMode(port);
             } else {
                 System.out.println("클라이언트로 접속");
-                Iterator<String> iter = cmd.getArgList().iterator();
-//                while (iter.hasNext()) {
-//                    System.out.println(iter.next());
-//                }
-                clientMode(iter.next(), iter.next());
+
+                if (cmd.getArgs().length < 2) {
+                    throw new NullPointerException("없는 인자");
+                }
+
+                port = Integer.parseInt(cmd.getArgs()[1]);
+                clientMode(cmd.getArgs()[0], port);
             }
         } catch (ParseException ignore) {
             System.out.println("인수가 잘못되었습니다");
+        } catch (NumberFormatException e){
+            System.out.println("잘못된 포트 번호");
         }
     }
 
-    public static void serverMode(String portString) {
-        System.out.println(portString);
-        int port = 1234;
-
-        try {
-            port = Integer.parseInt(portString);
-        } catch (NumberFormatException ignore) {
-            System.out.println("0 ~ 65535 크기의 정수만 입력가능");
-            System.exit(1);
-        }
+    public static void serverMode(int port) {
 
         try {
             ServerSocket serverSocket = new ServerSocket(port);
@@ -114,14 +112,7 @@ public class SimpleNC {
         }
     }
 
-    private static void clientMode(String host, String portString) {
-        int port = 1234;
-        try {
-            port = Integer.parseInt(portString);
-        } catch (NumberFormatException ignore) {
-            System.err.println("Port가 올바르지 않습니다.");
-            System.exit(1);
-        }
+    private static void clientMode(String host, int port) {
 
         try {
             Socket socket = new Socket(host, port);
